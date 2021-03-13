@@ -5,7 +5,7 @@ import (
 	"compress/gzip"
 	"compress/zlib"
 	"errors"
-	"github.com/Tnze/go-mc/nbt"
+	"github.com/Windowsfreak/go-mc/nbt"
 	"io"
 )
 

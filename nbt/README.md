@@ -17,7 +17,7 @@ To read and write would look like:
 package main
 
 import "bytes"
-import "github.com/Tnze/go-mc/nbt"
+import "github.com/Windowsfreak/go-mc/nbt"
 
 type Compound struct {
     Name string `nbt:"name"` // Note that if name is private (name), the field will not be used
@@ -50,4 +50,4 @@ type Compound struct {
 ```
 
 # Docs
-[![GoDoc](https://godoc.org/github.com/Tnze/go-mc/nbt?status.svg)](https://godoc.org/github.com/Tnze/go-mc/nbt)
+[![GoDoc](https://godoc.org/github.com/Windowsfreak/go-mc/nbt?status.svg)](https://godoc.org/github.com/Windowsfreak/go-mc/nbt)

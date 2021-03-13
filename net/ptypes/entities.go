@@ -1,6 +1,6 @@
 package ptypes
 
-import pk "github.com/Tnze/go-mc/net/packet"
+import pk "github.com/Windowsfreak/go-mc/net/packet"
 
 // SpawnEntity is a clientbound packet used to spawn a non-mob entity.
 type SpawnEntity struct {

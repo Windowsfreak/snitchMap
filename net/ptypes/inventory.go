@@ -5,11 +5,11 @@ import (
 	"bytes"
 	"errors"
 
-	"github.com/Tnze/go-mc/bot/world/entity"
-	"github.com/Tnze/go-mc/chat"
-	"github.com/Tnze/go-mc/data"
-	"github.com/Tnze/go-mc/nbt"
-	pk "github.com/Tnze/go-mc/net/packet"
+	"github.com/Windowsfreak/go-mc/bot/world/entity"
+	"github.com/Windowsfreak/go-mc/chat"
+	"github.com/Windowsfreak/go-mc/data"
+	"github.com/Windowsfreak/go-mc/nbt"
+	pk "github.com/Windowsfreak/go-mc/net/packet"
 )
 
 // SetSlot is a clientbound packet which configures an inventory slot.

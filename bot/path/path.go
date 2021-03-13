@@ -6,8 +6,8 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/Tnze/go-mc/bot/world"
-	"github.com/Tnze/go-mc/data/block"
+	"github.com/Windowsfreak/go-mc/bot/world"
+	"github.com/Windowsfreak/go-mc/data/block"
 	"github.com/beefsack/go-astar"
 )
 

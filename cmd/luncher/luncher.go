@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Tnze/go-mc/yggdrasil"
+	"github.com/Windowsfreak/go-mc/yggdrasil"
 )
 
 var user = flag.String("user", "", "Can be an email address or player name for unmigrated accounts")

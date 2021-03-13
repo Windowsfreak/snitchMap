@@ -4,9 +4,9 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/Tnze/go-mc/data"
-	pk "github.com/Tnze/go-mc/net/packet"
-	"github.com/Tnze/go-mc/net/ptypes"
+	"github.com/Windowsfreak/go-mc/data"
+	pk "github.com/Windowsfreak/go-mc/net/packet"
+	"github.com/Windowsfreak/go-mc/net/ptypes"
 )
 
 // SwingArm swing player's arm.
@@ -103,12 +103,11 @@ func (c *Client) PluginMessage(channel string, msg []byte) error {
 // insideBlock is true when the player's head is inside of a block's collision.
 func (c *Client) UseBlock(hand, locX, locY, locZ, face int, cursorX, cursorY, cursorZ float32, insideBlock bool) error {
 	return c.conn.WritePacket(pk.Marshal(
-		data.UseItem,
-		pk.VarInt(hand),
+		data.BlockPlace,
 		pk.Position{X: locX, Y: locY, Z: locZ},
 		pk.VarInt(face),
+		pk.VarInt(hand),
 		pk.Float(cursorX), pk.Float(cursorY), pk.Float(cursorZ),
-		pk.Boolean(insideBlock),
 	))
 }
 
@@ -136,10 +135,11 @@ func (c *Client) SelectItem(slot int) error {
 // use the currently selected slot. After finding the appropriate slot,
 // the server swaps the items and then change player's selected slot (cause the HeldItemChange event).
 func (c *Client) PickItem(slot int) error {
-	return c.conn.WritePacket(pk.Marshal(
+	return nil
+	/*return c.conn.WritePacket(pk.Marshal(
 		data.PickItem,
 		pk.VarInt(slot),
-	))
+	))*/
 }
 
 func (c *Client) playerAction(status, locX, locY, locZ, face int) error {

@@ -1,18 +1,19 @@
 package bot
 
 import (
+	"github.com/Windowsfreak/go-mc/chat"
 	"sync"
 	"time"
 
-	"github.com/Tnze/go-mc/bot/path"
-	"github.com/Tnze/go-mc/bot/phy"
-	"github.com/Tnze/go-mc/bot/world"
-	"github.com/Tnze/go-mc/bot/world/entity"
-	"github.com/Tnze/go-mc/bot/world/entity/player"
-	"github.com/Tnze/go-mc/data"
-	"github.com/Tnze/go-mc/net"
-	"github.com/Tnze/go-mc/net/packet"
-	pk "github.com/Tnze/go-mc/net/packet"
+	"github.com/Windowsfreak/go-mc/bot/path"
+	"github.com/Windowsfreak/go-mc/bot/phy"
+	"github.com/Windowsfreak/go-mc/bot/world"
+	"github.com/Windowsfreak/go-mc/bot/world/entity"
+	"github.com/Windowsfreak/go-mc/bot/world/entity/player"
+	"github.com/Windowsfreak/go-mc/data"
+	"github.com/Windowsfreak/go-mc/net"
+	"github.com/Windowsfreak/go-mc/net/packet"
+	pk "github.com/Windowsfreak/go-mc/net/packet"
 )
 
 // Client is used to access Minecraft server
@@ -90,7 +91,9 @@ type PlayInfo struct {
 
 // ServInfo contains information about the server implementation.
 type ServInfo struct {
-	Brand string
+	Brand            string
+	PlayerlistHeader chat.Message
+	PlayerlistFooter chat.Message
 }
 
 // PlayerAbilities defines what player can do.

@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+          integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+          crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+            integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+            crossorigin=""></script>
+    <script src="http://leaflet.github.io/Leaflet.Editable/src/Leaflet.Editable.js"></script>
+    <script src="lib/heatmap.min.js"></script>
+    <script src="lib/leaflet-heatmap.js"></script>
+    <style type="text/css">
+        #map { position: absolute; background-color: #000; top: 0; bottom: 160px; width: 100%; }
+        .icon-box:before {
+            content: '';
+            width: 40px;
+            left: -11px;
+            height: 15px;
+            position: absolute;
+            top: 42px;
+            background: radial-gradient(closest-side, rgba(0,0,0,1),rgba(0,0,0,0));
+        }
+        .icon-box {
+            position: absolute;
+            width: 21px;
+            height: 51px;
+        }
+        .icon-box .image {
+            position: absolute;
+            width: 21px;
+            height: 51px;
+            background-size: 100% 100%;
+        }
+        .icon-box .text {
+            position: absolute;
+            top: 52px;
+            width: 150px;
+            left: -65px;
+            text-align: center;
+            color: white;
+            text-shadow:
+                    1px  1px 1px black,
+                    1px -1px 1px black,
+                   -1px  1px 1px black,
+                   -1px -1px 1px black;
+        }
+        .hdg {
+            width: 12px;
+            height: 12px;
+            position: absolute;
+            left: 5px;
+            top: 5px;
+
+            animation-name: spin;
+            animation-duration: 1000ms;
+            animation-iteration-count: infinite;
+            animation-timing-function: linear;
+        }
+        .hdg svg {
+            width: 12px;
+            height: 12px;
+            position: relative;
+            top: -10px;
+            left: 10px;
+        }
+        .leaflet-control-layers-base img {
+            width: 32px;
+            height: 32px;
+            overflow: hidden;
+            border-radius: 25%;
+            vertical-align: middle;
+            margin-right: 3px;
+        }
+        .leaflet-control-layers-base div {
+            height: 40px;
+        }
+
+        .leaflet-tile, .leaflet-image-layer {
+            image-rendering: pixelated !important;
+        }
+
+        .leaflet-zoom-hide {
+            z-index: 100;
+        }
+
+        .chat {
+            height: 150px;
+            overflow-y: scroll;
+            position: absolute;
+            left: 40%;
+            right: 0;
+            bottom: 0;
+            margin: 10px;
+            box-sizing: border-box;
+        }
+        .snitches {
+            right: 60%;
+            left: 0;
+        }
+        .chat i {
+            color: #ccc;
+        }
+        .chat u {
+            text-decoration: none;
+            color: #aaa;
+        }
+        .chat b {
+            min-width: 80px;
+            display: inline-block;
+            text-indent: 0;
+        }
+        .chat s {
+            text-decoration: none;
+            color: #aaa;
+            min-width: 40px;
+            display: inline-block;
+            text-indent: 0;
+        }
+
+        .chat div {
+            padding-left: 4.5em;
+            text-indent:-4.5em;
+        }
+
+        .alert {
+            color: red;
+        }
+
+        html, body {
+            margin: 0;
+            background: #000;
+        }
+        .cboxes {
+            font-size: 0;
+        }
+        .cbox {
+            width: 14px;
+            height: 14px;
+            display: inline-block;
+        }
+        .chat .replay {
+            padding-left: 0;
+            text-indent: 0;
+        }
+        .replay label {
+            display: inline;
+        }
+        #tooltip {
+            display: none;
+            position: absolute;
+            background: #666;
+            color: white;
+            opacity: 0.5;
+            padding: 10px;
+            border: 1px dashed #999;
+            font-family: sans-serif;
+            font-size: 12px;
+            height: 20px;
+            line-height: 20px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+<div id="chat" class="leaflet-control-layers leaflet-control-layers-expanded leaflet-control leaflet-container chat"></div>
+<div id="snitches" class="leaflet-control-layers leaflet-control-layers-expanded leaflet-control leaflet-container chat snitches"></div>
+<div id="map"></div>
+<div id='tooltip'></div>
+<script type="text/javascript">
+    const flop = new Intl.NumberFormat(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format;
+    const makeDate = timestamp => (timestamp <= 0 ? 'never' : new Date(timestamp * 1000).toLocaleString(undefined, {day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit'}));
+    const makeTime = timestamp => (timestamp <= 0 ? 'never' : new Date(timestamp * 1000).toLocaleTimeString(undefined, {hour: '2-digit', minute: '2-digit', second: '2-digit'}));
+
+    const hex = value => '#' + value.map(i => Math.floor(i).toString(16).padStart(2, '0')).join('');
+    const mix = (a, b, t) => a.map((a1, i) => a1 * (1-t) + b[i] * t);
+    const mix2 = (colors, t) => {
+        const partSize = 1 / (colors.length - 1);
+        const part = Math.floor(t / partSize);
+        if (part < 0) {
+            return colors[0];
+        } else if (part >= colors.length - 1) {
+            return colors[colors.length - 1]
+        } else return mix(colors[part], colors[part + 1], t / partSize - part)
+    };
+    const gradient_height = t => {
+        return hex(mix2([
+            [0, 0, 0],
+            [255, 0, 0],
+            [255, 255, 255],
+            [0, 0, 255],
+            [255, 0, 255]
+        ], t))
+    };
+    const gradient_jet = t => {
+        return hex(mix2([
+            [0, 0, 127],
+            [32, 127, 191],
+            [127, 255, 255],
+            [255, 255, 63],
+            [229, 31, 31],
+            [127, 0, 0]
+        ], t))
+    }
+    const gradient_bath = t => {
+        return hex(mix2([
+            [38, 24, 43],
+            [67, 85, 138],
+            [89, 141, 156],
+            [136, 200, 166],
+            [255, 255, 209]
+        ], t))
+    };
+    const gradient_cube = t => {
+        return hex(mix2([
+            [0, 0, 0],
+            [54, 15, 101],
+            [135, 31, 139],
+            [231, 55, 123],
+            [236, 69, 84],
+            [241, 149, 65],
+            [228, 210, 103],
+            [232, 251, 203]
+        ], t))
+    };
+    const gradient_from_height = p => (p.Y / 160) || 1;
+    const gradient_from_seen = p => ((playerTime - p.Seen) / 600) || 1;
+    const gradient_from_cull = p => (p.Cull / 672) || (playerTime - Math.max(p.Login, p.Logout, p.Seen)) || 1;
+    const gradient_from_hits = p => (p.Hits / 500) || 0;
+    const gradient_from_dead = p => p.Dead ? 1 : 0;
+    const gradient_from_alert = p => p.Alert ? 1 : 0;
+    const gradient = {
+        gradient_height,
+        gradient_jet,
+        gradient_bath,
+        gradient_cube
+    }[localStorage.getItem('snitchmap-gradient-type')] || gradient_height;
+    const gradient_func = {
+        gradient_from_height,
+        gradient_from_seen,
+        gradient_from_cull,
+        gradient_from_hits,
+        gradient_from_dead,
+        gradient_from_alert
+    }[localStorage.getItem('snitchmap-gradient-source')] || gradient_from_height;
+
+    const html = text => {
+        const tmp = document.createElement('div');
+        tmp.innerText = text;
+        return tmp.innerHTML || '';
+    };
+
+    const http = function(method, url, params, headers = {}) {
+        return new Promise(function (resolve, reject) {
+            const xhr = new XMLHttpRequest();
+            xhr.open(method, url);
+            xhr.onload = function () {
+                if (this.status >= 200 && this.status < 300) {
+                    try {
+                        resolve(headers.accept === 'text/html' ? xhr.response : JSON.parse(xhr.response));
+                    } catch (e) {
+                        //xhr.onerror();
+                        console.error('error_server_request');
+                        reject({
+                            method,
+                            url,
+                            params,
+                            headers,
+                            status: this.status,
+                            statusText: xhr.statusText,
+                            message: xhr.response
+                        });
+                    }
+                } else {
+                    xhr.onerror();
+                }
+            };
+            xhr.onerror = function() {
+                console.error('error_server_request');
+                reject({
+                    method,
+                    url,
+                    params,
+                    headers,
+                    status: this.status,
+                    statusText: xhr.statusText,
+                    message: xhr.response
+                });
+            };
+            if (headers) {
+                Object.keys(headers).forEach(key => xhr.setRequestHeader(key, headers[key]));
+            }
+            // stringify params if object:
+            if (params && typeof params === 'object') {
+                xhr.send(Object.keys(params).map(key => encodeURIComponent(key) + '=' + encodeURIComponent(params[key])).join('&'));
+            } else {
+                xhr.send(params);
+            }
+        });
+    };
+    const get = (url, params, headers) => {
+        if (params && typeof params === 'object') {
+            return http('GET', url + (url.indexOf('?') > 0 ? '&' : '?') + Object.keys(params).map(key => encodeURIComponent(key) + '=' + encodeURIComponent(params[key])).join('&'), undefined, headers);
+        } else if (params) {
+            return http('GET', url + (url.indexOf('?') > 0 ? '&' : '?') + params, undefined, headers);
+        } else {
+            return http('GET', url, params, headers);
+        }
+    };
+
+    const chatBox = document.getElementById('chat');
+    const eventsBox = document.getElementById('snitches');
+
+    let token = '';
+
+    let playerTime = -3600 * 6;
+    let eventId = -1;
+    let chatId = -1;
+
+    let playerMarkers = {};
+    let snitchMarkers = [];
+
+    const playerLayer = L.layerGroup();
+    const snitchLayer = L.layerGroup();
+    const rectLayer = L.layerGroup();
+    const heatmapLayer = new HeatmapOverlay({
+        radius: 20,
+        maxOpacity: .8,
+        scaleRadius: false, // scales the radius based on map zoom
+        useLocalExtrema: true,
+        latField: 'Z',
+        lngField: 'X',
+        valueField: 'Count',
+        pane: 'overlayPane'
+    });
+
+    const addMessages = messages => {
+        if (!messages.length) return;
+        const shouldScroll = chatBox.scrollTop + chatBox.clientHeight === chatBox.scrollHeight;
+        messages.forEach(msg => {
+            const elem = document.createElement('div');
+            if (msg.Nl === '') {
+                elem.innerHTML = `<u>${makeTime(msg.Time)}</u> <i>${html(msg.User)} ${html(msg.Text)}</i>`;
+            } else {
+                elem.innerHTML = `<u>${makeTime(msg.Time)}</u> <u>[${html(msg.Nl)}]</u> <b>${html(msg.User)}</b> ${html(msg.Text)}`;
+            }
+            chatBox.appendChild(elem);
+        })
+        if (shouldScroll) {
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    }
+
+    const addEvents = events => {
+        if (!events.length) return;
+        const shouldScroll = eventsBox.scrollTop + eventsBox.clientHeight === eventsBox.scrollHeight;
+        const heatmapEvents = [];
+        events.forEach(event => {
+            const elem = document.createElement('div');
+            if (event.alert) {
+                elem.className = 'alert';
+            }
+            elem.innerHTML = `<u>${makeTime(event.Time)}</u> <s>[${html(event.Nl)}]</s> <b>${html(event.User)}</b> ${html(event.Event)} ${html(event.Name)} [${event.X} / ${event.Y} / ${event.Z}]`;
+            eventsBox.appendChild(elem);
+            heatmapEvents.push({Z: event.Z + 0.5, X: event.X + 0.5, Count: 1});
+        })
+        heatmapLayer.addData(heatmapEvents);
+        if (shouldScroll) {
+            eventsBox.scrollTop = eventsBox.scrollHeight;
+        }
+    }
+    const addPath = events => {
+        if (!events.length) return;
+        const path = [];
+        events.forEach((event, index) => {
+            const latLng = [event.Z + 0.5, event.X + 0.5];
+            path.push(latLng);
+            L.circleMarker(latLng, {radius: 5, color: gradient(index / events.length)}).addTo(playerLayer);
+        });
+        L.polyline(path, {color: 'black'}).addTo(playerLayer);
+    }
+
+    const setPlayer = player => {
+        const color = gradient(gradient_func(player));
+        const pos = [player.Z + 0.5, player.X + 0.5];
+        const hdg = (player.Speed > 0) ? `<div class="hdg" style="transform: rotate(${player.Angle + 45}deg); fill: ${color}"><svg enable-background="new 0 0 511.982 511.982" height="512" viewBox="0 0 511.982 511.982" width="512" xmlns="http://www.w3.org/2000/svg"><path d="m507.6 4.462c-4.302-4.311-10.78-5.59-16.393-3.237l-482.008 202.009c-5.997 2.513-9.691 8.61-9.146 15.094s5.205 11.877 11.537 13.352l210.007 48.914c4.057.945 7.229 4.104 8.191 8.157l50.219 211.636c1.498 6.314 6.884 10.949 13.347 11.483.415.034.828.051 1.239.051 5.989 0 11.458-3.588 13.809-9.187l202.408-481.859c2.359-5.616 1.091-12.102-3.21-16.413z"/></svg></div>` : '';
+        const icon = L.divIcon({
+            className: 'some-class',
+            html: `<div class="icon-box"><div class="image" style="background-image: url('https://mc-heads.net/body/${player.User}/32');"></div><div class="text">${player.User}</div>${hdg}</div>`,
+            iconSize: [21, 51],
+            iconAnchor: [11, 46]
+        });
+        const text = `<b>${player.User}</b><table><tr><th>Location:</th><td>${player.X} / ${player.Y} / ${player.Z}</td></tr><tr><th>Angle:</th><td>${flop(player.Speed && (player.Angle + 90))} (${flop(player.Speed)} b/sec)</td></tr><tr><th>Login:</th><td>${makeDate(player.Login)}</td></tr><tr><th>Logout:</th><td>${makeDate(player.Logout)}</td></tr><tr><th>Seen:</th><td>${makeDate(player.Seen)}</td></tr><tr><th>Hits:</th><td>${player.Hits}</td></tr></table>`;
+        if (playerMarkers[player.User] === undefined) {
+            playerMarkers[player.User] = L.marker(pos, {icon});
+            playerMarkers[player.User].bindPopup(text, {offset: L.point(0, -52)});
+            playerMarkers[player.User].addTo(playerLayer);
+        } else {
+            playerMarkers[player.User].setLatLng(pos);
+            playerMarkers[player.User].setIcon(icon);
+            playerMarkers[player.User].setPopupContent(text);
+        }
+    }
+
+    const makeSnitch = (z, x) => ([[z - 11, x - 11], [z + 12, x + 12]]);
+
+    const updateSnitches = () => {
+        if (snitchMarkers.length > 0) return;
+        get('/world/snitches/all', {token}).then(it => {
+            snitchMarkers = it.map(snitch => {
+                const marker = L.rectangle(makeSnitch(snitch.Z + 0.5, snitch.X + 0.5), {
+                    weight: 1,
+                    color: gradient(gradient_func(snitch))
+                });
+                const t1 = snitch.Alert ? '<span class="alert">' : '';
+                const t2 = snitch.Alert ? '</span>' : '';
+                const t3 = snitch.Dead ? '<s>' : '';
+                const t4 = snitch.Dead ? '</s>' : '';
+                marker.bindPopup(`${t1}${t3}[${snitch.Nl}] <b>${snitch.Name || 'unnamed snitch'}</b>${t4}${t2}<br><table><tr><th>Location:</th><td>${snitch.X} / ${snitch.Y} / ${snitch.Z}</td></tr><tr><th>Seen:</th><td>${makeDate(snitch.Seen)}</td></tr><tr><th>Read:</th><td>${makeDate(snitch.Read)}</td></tr><tr><th>Cull:</th><td>${flop(snitch.Cull)}</td></tr><tr><th>Hits:</th><td>${snitch.Hits}</td></tr><tr><th>Dead:</th><td>${snitch.Dead}</td></tr><tr><th>Alert:</th><td>${snitch.Alert}</td></tr></table>`);
+                marker.addTo(snitchLayer);
+                return marker;
+            });
+        });
+    }
+    const updateUsers = () => get('/world/users/after', {token, time: playerTime}).then(it => {
+        playerTime = it.Time - 1;
+        it.Users.forEach(user => setPlayer(user));
+    });
+    const updateEvents = () => {
+        if (eventId < 0) {
+            get('/world/events/id', {token}).then(it => {
+                eventId = Math.max(0, it - 500);
+                if (eventId >= 0) {
+                    updateEvents();
+                }
+            });
+        } else {
+            get('/world/events/after', {token, rowid: eventId, limit: 500}).then(it => {
+                eventId = Math.max(eventId, ...it.map(entry => entry.Rowid));
+                addEvents(it);
+            });
+        }
+    }
+    const replayPlayer = () => {
+        get('/world/user', {token, username: document.getElementById('replay-input-player').value}).then(it => {
+            setPlayer(it);
+        });
+    }
+    const replayTrail = () => {
+        if (eventId < 0) {
+            time = -parseFloat(document.getElementById('replay-input-hours').value) * 3600 - parseFloat(document.getElementById('replay-input-seconds').value)
+            get('/world/events/user/id', {token, time, username: document.getElementById('replay-input-player').value}).then(it => {
+                eventId = Math.max(0, it - 1);
+                if (eventId >= 0) {
+                    replayTrail();
+                }
+            });
+        } else {
+            eventsBox.innerHTML = '';
+            playerLayer.clearLayers();
+            playerMarkers = {};
+            get('/world/events/user/after', {token, rowid: eventId, username: document.getElementById('replay-input-player').value, limit: document.getElementById('replay-input-limit').value}).then(it => {
+                eventId = Math.max(eventId, ...it.map(entry => entry.Rowid));
+                addEvents(it);
+                addPath(it);
+                eventId = -1;
+            });
+        }
+    }
+    const updateChats = () => {
+        if (chatId < 0) {
+            get('/world/chats/id', {token}).then(it => {
+                chatId = Math.max(0, it - 200);
+                if (chatId >= 0) {
+                    updateChats();
+                }
+            });
+        } else {
+            get('/world/chats/after', {token, rowid: chatId, limit: 500}).then(it => {
+                chatId = Math.max(chatId, ...it.map(entry => entry.Rowid));
+                addMessages(it);
+            });
+        }
+    }
+
+    const update = () => {
+        token = document.getElementById('apiKey').value;
+        updateUsers();
+        updateEvents();
+        updateChats();
+        updateSnitches();
+    }
+
+    const resetMap = () => {
+        eventId = -1;
+        chatId = -1;
+        playerTime = -3600 * 6;
+        eventsBox.innerHTML = '';
+        chatBox.innerHTML = '';
+        heatmapLayer.setData({
+            min: 0,
+            max: 0,
+            length: 0,
+            data: []
+        })
+        playerLayer.clearLayers();
+        playerMarkers = {};
+    }
+
+    const goLive = () => {
+        if (!window.timer) {
+            resetMap();
+            update()
+            window.timer = window.setInterval(update, 5000);
+        }
+    }
+
+    const goOffline = () => {
+        if (window.timer) {
+            window.clearTimeout(window.timer);
+            delete window.timer;
+
+        }
+        resetMap();
+        get('/replay.htm', null, {accept: 'text/html'}).then(it => {
+            chatBox.innerHTML = it;
+        });
+        token = document.getElementById('apiKey').value;
+    }
+
+    const tileBounds = [[-7500, -7500], [13650, 7500]];
+    const map = L.map('map', {
+        crs: L.extend({}, L.CRS.Simple, {
+            transformation: new L.Transformation(1, 0, 1, 0)
+        }),
+        center: [0, 0],
+        zoom: -6,
+        maxZoom: 5,
+        minZoom: -6,
+        maxBounds: tileBounds,
+        attributionControl: false,
+        zoomControl: false,
+        editable: true
+    });
+    map.on('mousemove', e => {
+        document.getElementById('x').innerText = `${Math.floor(e.latlng.lng)}`;
+        document.getElementById('z').innerText = `${Math.floor(e.latlng.lat)}`;
+    });
+
+    const maps = [
+        {name: 'Terrain', id: 'terrain', default: true},
+        {name: 'Biome', id: 'biome'},
+        {name: 'Height', id: 'height'},
+        {name: 'Landmass', id: 'simple'},
+        {name: 'Night', id: 'night'},
+        {name: 'Light', id: 'light'},
+    ];
+
+    const tileLayers = [];
+
+    let defaultMap = undefined;
+    maps.forEach(map => {
+        const tileLayer = L.tileLayer('https://raw.githubusercontent.com/MadDog443/CUTiles/main/' + map.id + '/z{z}/{x},{y}.png', {
+            errorTileUrl: 'data:image/gifbase64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
+            minZoom: -6,
+            maxNativeZoom: 0,
+            bounds: tileBounds,
+            id: map.id,
+            tileSize: 256,
+            continuousWorld: true
+        });
+        if (map.default) {
+            defaultMap = tileLayer;
+        }
+        tileLayers['<img src="https://raw.githubusercontent.com/MadDog443/CUTiles/main/' + map.id + '/z-2/0,0.png">' + map.name] = tileLayer;
+    });
+
+    defaultMap.addTo(map);
+
+    const imageLayer = L.imageOverlay('https://www.mediafire.com/convkey/9c9b/wee5xkop6iugcw7zg.jpg', [[-7168,-7168],[13311,7168]]);
+    const imageLayer2 = L.imageOverlay('https://i.redd.it/ptov93hck1j61.png', [[-7168,-7168],[13311,7168]]);
+    const imageLayer3 = L.imageOverlay('https://cdn.discordapp.com/attachments/783248666249003018/813420947658506261/Feb_22_2021_L.png', [[-7168,-7168],[13311,7168]]);
+
+    rectLayer.addTo(map);
+
+    const compass = new (L.Control.extend({
+        onAdd: function(map) {
+            const div = L.DomUtil.create('div');
+            div.className = 'leaflet-control-layers leaflet-control-layers-expanded leaflet-control'
+            div.style.width = '160px';
+            div.innerHTML = `
+                Coordinates: <span id="x">0</span> / <span id="z">0</span>
+            `;
+            return div;
+        },
+        onRemove: function(map) {}
+    }))({position: 'bottomleft'});
+
+    compass.addTo(map);
+
+    const updateApiKey = () => {
+        localStorage.setItem('snitchmap-api-key', document.getElementById('apiKey').value);
+    }
+    const updateGradient = () => {
+        localStorage.setItem('snitchmap-gradient-type', document.getElementById('gradientType').value);
+        localStorage.setItem('snitchmap-gradient-source', document.getElementById('gradientSource').value);
+    }
+    const apiKeyControl = new (L.Control.extend({
+        onAdd: function(map) {
+            const div = L.DomUtil.create('div');
+            div.className = 'leaflet-control-layers leaflet-control-layers-expanded leaflet-control'
+            div.style.width = '160px';
+            div.innerHTML = `
+                API password: <input type="text" id="apiKey" value="${localStorage.getItem('snitchmap-api-key') || 'top-secret'}" onchange="updateApiKey();">
+                <br>
+                Gradient type: <input type="text" id="gradientType" title="gradient_height, gradient_jet, gradient_bath, gradient_cube" value="${localStorage.getItem('snitchmap-gradient-type') || 'gradient_height'}" onchange="updateGradient();">
+                <br>
+                Gradient source: <input type="text" id="gradientSource" title="gradient_from_height, gradient_from_seen, gradient_from_cull, gradient_from_hits, gradient_from_dead, gradient_from_alert" value="${localStorage.getItem('snitchmap-gradient-source') || 'gradient_from_height'}" onchange="updateGradient();">
+                <br>
+                Preview (reload!)
+                <div class="cboxes">
+                    <div class="cbox" style="background-color: ${gradient(0)}"></div>
+                    <div class="cbox" style="background-color: ${gradient(0.1)}"></div>
+                    <div class="cbox" style="background-color: ${gradient(0.2)}"></div>
+                    <div class="cbox" style="background-color: ${gradient(0.3)}"></div>
+                    <div class="cbox" style="background-color: ${gradient(0.4)}"></div>
+                    <div class="cbox" style="background-color: ${gradient(0.5)}"></div>
+                    <div class="cbox" style="background-color: ${gradient(0.6)}"></div>
+                    <div class="cbox" style="background-color: ${gradient(0.7)}"></div>
+                    <div class="cbox" style="background-color: ${gradient(0.8)}"></div>
+                    <div class="cbox" style="background-color: ${gradient(0.9)}"></div>
+                    <div class="cbox" style="background-color: ${gradient(1)}"></div>
+                </div>
+                Please choose mode:
+                <br />
+                <button onclick="goLive()">Live</button>
+                <button onclick="goOffline()">Replay</button>
+            `;
+            return div;
+        },
+        onRemove: function(map) {}
+    }))({position: 'bottomleft'});
+
+    apiKeyControl.addTo(map);
+
+    L.control.layers(tileLayers, {
+        'Political - 2021-02-09': imageLayer,
+        'Political - 2021-02-22': imageLayer2,
+        'Political - 2021-02-22 HD': imageLayer3,
+        Snitches: snitchLayer,
+        Players: playerLayer,
+        Heatmap: heatmapLayer
+    }, {collapsed: false, position: 'topleft'}).addTo(map);
+
+    const tooltip = L.DomUtil.get('tooltip');
+    function addTooltip (e) {
+        L.DomEvent.on(document, 'mousemove', moveTooltip);
+        tooltip.innerHTML = 'Drag your mouse to define a JukeAlert rectangle.';
+        tooltip.style.display = 'block';
+    }
+
+    function removeTooltip (e) {
+        tooltip.innerHTML = '';
+        tooltip.style.display = 'none';
+        L.DomEvent.off(document, 'mousemove', moveTooltip);
+    }
+
+    function moveTooltip (e) {
+        tooltip.style.left = e.clientX + 20 + 'px';
+        tooltip.style.top = e.clientY - 10 + 'px';
+    }
+
+    map.on('editable:drawing:start', addTooltip);
+    map.on('editable:drawing:end', removeTooltip);
+
+    map.editTools.featuresLayer = rectLayer;
+
+    function saveAlerts() {
+        const rects = rectLayer.getLayers();
+        if (rects.length > 0) {
+            const rect = rects[0];
+            const b = rect.getBounds();
+            console.log(rect);
+            get('/world/alerts/set', {
+                token,
+                alert: rect.options.color === '#F00',
+                x1: Math.round(b.getWest()),
+                z1: Math.round(b.getSouth()),
+                x2: Math.round(b.getEast()),
+                z2: Math.round(b.getNorth())
+            }).then(() => {
+                rectLayer.removeLayer(rect);
+                saveAlerts();
+            }, err => {
+                const elem = document.createElement('div');
+                elem.className = 'alert';
+                console.log(err);
+                elem.innerHTML = `Error: ${err.message || err}`;
+                eventsBox.appendChild(elem);
+            });
+        }
+    }
+</script>
+</body>
+</html>

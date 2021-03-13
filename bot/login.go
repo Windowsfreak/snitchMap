@@ -15,8 +15,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Tnze/go-mc/net/CFB8"
-	pk "github.com/Tnze/go-mc/net/packet"
+	"github.com/Windowsfreak/go-mc/net/CFB8"
+	pk "github.com/Windowsfreak/go-mc/net/packet"
 	"github.com/google/uuid"
 )
 

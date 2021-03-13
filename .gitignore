@@ -17,3 +17,7 @@
 cmd/test/test.go
 .idea/
 .vscode/
+
+# API keys etc.
+./config.yml
+*.db

@@ -3,9 +3,9 @@ package ptypes
 import (
 	"io/ioutil"
 
-	"github.com/Tnze/go-mc/chat"
-	"github.com/Tnze/go-mc/data"
-	pk "github.com/Tnze/go-mc/net/packet"
+	"github.com/Windowsfreak/go-mc/chat"
+	"github.com/Windowsfreak/go-mc/data"
+	pk "github.com/Windowsfreak/go-mc/net/packet"
 )
 
 // SoundEffect is a clientbound packet used to play a specific sound ID
@@ -36,13 +36,12 @@ func (p *NamedSoundEffect) Decode(pkt pk.Packet) error {
 
 // ChatMessageClientbound represents a chat message forwarded by the server.
 type ChatMessageClientbound struct {
-	S      chat.Message
-	Pos    pk.Byte
-	Sender pk.UUID
+	S   chat.Message
+	Pos pk.Byte
 }
 
 func (p *ChatMessageClientbound) Decode(pkt pk.Packet) error {
-	return pkt.Scan(&p.S, &p.Pos, &p.Sender)
+	return pkt.Scan(&p.S, &p.Pos)
 }
 
 // UpdateHealth encodes player health/food information from the server.

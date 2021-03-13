@@ -3,11 +3,11 @@ package chat_test
 import (
 	"bytes"
 	"fmt"
-	"github.com/Tnze/go-mc/chat"
+	"github.com/Windowsfreak/go-mc/chat"
 	"testing"
 
-	_ "github.com/Tnze/go-mc/data/lang/en-us"
-	pk "github.com/Tnze/go-mc/net/packet"
+	_ "github.com/Windowsfreak/go-mc/data/lang/en-us"
+	pk "github.com/Windowsfreak/go-mc/net/packet"
 )
 
 /*

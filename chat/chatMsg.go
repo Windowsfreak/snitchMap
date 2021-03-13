@@ -15,7 +15,7 @@ import (
 	"regexp"
 	"strings"
 
-	pk "github.com/Tnze/go-mc/net/packet"
+	pk "github.com/Windowsfreak/go-mc/net/packet"
 )
 
 //Message is a message sent by other

@@ -3,10 +3,10 @@ package entity
 import (
 	"bytes"
 
-	"github.com/Tnze/go-mc/data/entity"
-	item "github.com/Tnze/go-mc/data/item"
-	"github.com/Tnze/go-mc/nbt"
-	pk "github.com/Tnze/go-mc/net/packet"
+	"github.com/Windowsfreak/go-mc/data/entity"
+	item "github.com/Windowsfreak/go-mc/data/item"
+	"github.com/Windowsfreak/go-mc/nbt"
+	pk "github.com/Windowsfreak/go-mc/net/packet"
 	"github.com/google/uuid"
 )
 
@@ -49,21 +49,23 @@ type Slot struct {
 	Present bool
 	ItemID  item.ID
 	Count   int8
+	Damage  int16
 	NBT     interface{}
 }
 
 //Decode implement packet.FieldDecoder interface
 func (s *Slot) Decode(r pk.DecodeReader) error {
-	if err := (*pk.Boolean)(&s.Present).Decode(r); err != nil {
+	var itemID pk.Short
+	if err := itemID.Decode(r); err != nil {
 		return err
 	}
+	s.Present = itemID != -1
 	if s.Present {
-		var itemID pk.VarInt
-		if err := itemID.Decode(r); err != nil {
-			return err
-		}
 		s.ItemID = item.ID(itemID)
 		if err := (*pk.Byte)(&s.Count).Decode(r); err != nil {
+			return err
+		}
+		if err := (*pk.Short)(&s.Damage).Decode(r); err != nil {
 			return err
 		}
 		if err := nbt.NewDecoder(r).Decode(&s.NBT); err != nil {
@@ -79,9 +81,9 @@ func (s Slot) Encode() []byte {
 	}
 
 	var b bytes.Buffer
-	b.Write(pk.Boolean(true).Encode())
-	b.Write(pk.VarInt(s.ItemID).Encode())
+	b.Write(pk.Short(s.ItemID).Encode())
 	b.Write(pk.Byte(s.Count).Encode())
+	b.Write(pk.Short(s.Damage).Encode())
 
 	if s.NBT != nil {
 		nbt.NewEncoder(&b).Encode(s.NBT)

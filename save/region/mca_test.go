@@ -3,7 +3,7 @@ package region
 import (
 	"bytes"
 	"compress/zlib"
-	"github.com/Tnze/go-mc/nbt"
+	"github.com/Windowsfreak/go-mc/nbt"
 	"testing"
 )
 

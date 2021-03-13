@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/Tnze/go-mc/bot/path"
-	"github.com/Tnze/go-mc/bot/world"
-	"github.com/Tnze/go-mc/bot/world/entity/player"
-	"github.com/Tnze/go-mc/data/block/shape"
+	"github.com/Windowsfreak/go-mc/bot/path"
+	"github.com/Windowsfreak/go-mc/bot/world"
+	"github.com/Windowsfreak/go-mc/bot/world/entity/player"
+	"github.com/Windowsfreak/go-mc/data/block/shape"
 )
 
 const (
@@ -25,7 +25,7 @@ const (
 	ladderMaxSpeed   = 0.15
 	ladderClimbSpeed = 0.2
 
-	gravity      = 0.08
+	gravity      = 0 //0.08
 	drag         = 0.98
 	acceleration = 0.02
 	inertia      = 0.91

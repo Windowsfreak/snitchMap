@@ -1,0 +1,16 @@
+<div class="replay">
+    Show <label for="replay-input-player">player</label> <input type="text" id="replay-input-player" value="Windowsfreak" />'s<br />
+    <button onclick="replayPlayer()">Current Position</button> or
+    <button onclick="replayTrail()">Trail</button>
+    <br />
+    starting <input type="text" id="replay-input-hours" value="0.5" /> <label for="replay-input-hours">hours</label> and <input type="text" id="replay-input-seconds" value="0" /> <label for="replay-input-hours">seconds</label> ago
+    <br />
+    limited to <input type="text" id="replay-input-limit" value="100" /> <label for="replay-input-limit">actions</label>
+    <br />
+    <br />
+    Alert Regions:
+    <button onclick="map.editTools.startRectangle(null, {color: '#F00'})">Enable</button>
+    <button onclick="map.editTools.startRectangle(null, {color: '#00F'})">Disable</button>
+    <button onclick="saveAlerts()">Apply Changes</button>
+    <button onclick="rectLayer.clearLayers()">Reset</button>
+</div>

@@ -5,20 +5,20 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/Tnze/go-mc/bot/world/entity"
-	"github.com/Tnze/go-mc/nbt"
-	pk "github.com/Tnze/go-mc/net/packet"
+	"github.com/Windowsfreak/go-mc/bot/world/entity"
+	"github.com/Windowsfreak/go-mc/nbt"
+	pk "github.com/Windowsfreak/go-mc/net/packet"
 )
 
 // ChunkData is a clientbound packet which describes a chunk.
 type ChunkData struct {
-	X, Z           pk.Int
-	FullChunk      pk.Boolean
-	PrimaryBitMask pk.VarInt
-	Heightmaps     struct{}
-	Biomes         biomesData
-	Data           chunkData
-	BlockEntities  blockEntities
+	X, Z               pk.Int
+	GroundUpContinuous pk.Boolean
+	PrimaryBitMask     pk.VarInt
+	Heightmaps         struct{}
+	Biomes             biomesData
+	Data               chunkData
+	BlockEntities      blockEntities
 }
 
 func (p *ChunkData) Decode(pkt pk.Packet) error {
@@ -29,25 +29,23 @@ func (p *ChunkData) Decode(pkt pk.Packet) error {
 	if err := p.Z.Decode(r); err != nil {
 		return fmt.Errorf("Z: %v", err)
 	}
-	if err := p.FullChunk.Decode(r); err != nil {
+	if err := p.GroundUpContinuous.Decode(r); err != nil {
 		return fmt.Errorf("full chunk: %v", err)
 	}
 	if err := p.PrimaryBitMask.Decode(r); err != nil {
 		return fmt.Errorf("bit mask: %v", err)
 	}
-	if err := (pk.NBT{V: &p.Heightmaps}).Decode(r); err != nil {
+	/* if err := (pk.NBT{V: &p.Heightmaps}).Decode(r); err != nil {
 		return fmt.Errorf("heightmaps: %v", err)
+	}*/
+	if err := p.Data.Decode(r); err != nil {
+		return fmt.Errorf("data: %v", err)
 	}
-
 	// Biome data is only present for full chunks.
-	if p.FullChunk {
+	if p.GroundUpContinuous {
 		if err := p.Biomes.Decode(r); err != nil {
 			return fmt.Errorf("heightmaps: %v", err)
 		}
-	}
-
-	if err := p.Data.Decode(r); err != nil {
-		return fmt.Errorf("data: %v", err)
 	}
 	if err := p.BlockEntities.Decode(r); err != nil {
 		return fmt.Errorf("block entities: %v", err)
@@ -56,18 +54,15 @@ func (p *ChunkData) Decode(pkt pk.Packet) error {
 }
 
 type biomesData struct {
-	data []pk.VarInt
+	data []pk.Byte
 }
 
 func (b *biomesData) Decode(r pk.DecodeReader) error {
-	var nobd pk.VarInt // Number of Biome Datums
-	if err := nobd.Decode(r); err != nil {
-		return err
-	}
-	b.data = make([]pk.VarInt, nobd)
+	nobd := 256 // Number of Biome Datums
+	b.data = make([]pk.Byte, nobd)
 
-	for i := 0; i < int(nobd); i++ {
-		var d pk.VarInt
+	for i := 0; i < nobd; i++ {
+		var d pk.Byte
 		if err := d.Decode(r); err != nil {
 			return err
 		}

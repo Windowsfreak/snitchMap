@@ -9,13 +9,13 @@ import (
 	"net"
 	"strconv"
 
-	"github.com/Tnze/go-mc/data"
-	mcnet "github.com/Tnze/go-mc/net"
-	pk "github.com/Tnze/go-mc/net/packet"
+	"github.com/Windowsfreak/go-mc/data"
+	mcnet "github.com/Windowsfreak/go-mc/net"
+	pk "github.com/Windowsfreak/go-mc/net/packet"
 )
 
 // ProtocolVersion , the protocol version number of minecraft net protocol
-const ProtocolVersion = 754
+const ProtocolVersion = 340
 
 // JoinServer connect a Minecraft server for playing the game.
 func (c *Client) JoinServer(addr string, port int) (err error) {

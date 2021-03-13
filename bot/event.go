@@ -1,13 +1,12 @@
 package bot
 
 import (
-	"github.com/Tnze/go-mc/bot/world/entity"
-	"github.com/Tnze/go-mc/bot/world/entity/player"
-	"github.com/Tnze/go-mc/chat"
-	"github.com/google/uuid"
-
-	pk "github.com/Tnze/go-mc/net/packet"
-	"github.com/Tnze/go-mc/net/ptypes"
+	repository2 "github.com/Windowsfreak/go-mc/bot/repository"
+	"github.com/Windowsfreak/go-mc/bot/world/entity"
+	"github.com/Windowsfreak/go-mc/bot/world/entity/player"
+	"github.com/Windowsfreak/go-mc/chat"
+	pk "github.com/Windowsfreak/go-mc/net/packet"
+	"github.com/Windowsfreak/go-mc/net/ptypes"
 )
 
 type seenPacketFlags uint8
@@ -34,15 +33,18 @@ type eventBroker struct {
 	seenPackets seenPacketFlags
 	isReady     bool
 
-	GameStart      func() error
-	ChatMsg        func(msg chat.Message, pos byte, sender uuid.UUID) error
-	Disconnect     func(reason chat.Message) error
-	HealthChange   func() error
-	Die            func() error
-	SoundPlay      func(name string, category int, x, y, z float64, volume, pitch float32) error
-	PluginMessage  func(channel string, data []byte) error
-	HeldItemChange func(slot int) error
-	OpenWindow     func(pkt ptypes.OpenWindow) error
+	GameStart        func() error
+	ChatMsg          func(msg chat.Message, pos byte) error
+	Disconnect       func(reason chat.Message) error
+	HealthChange     func() error
+	Die              func() error
+	SoundPlay        func(name string, category int, x, y, z float64, volume, pitch float32) error
+	PluginMessage    func(channel string, data []byte) error
+	HeldItemChange   func(slot int) error
+	OpenWindow       func(pkt ptypes.OpenWindow) error
+	PlayerlistUpdate func(header chat.Message, footer chat.Message) error
+	PlayerJoin       func(snitchPlayer *repository2.SnitchPlayer) error
+	PlayerLeave      func(snitchPlayer *repository2.SnitchPlayer) error
 
 	// ExperienceChange will be called every time player's experience level updates.
 	// Parameters:

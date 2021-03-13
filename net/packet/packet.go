@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/Tnze/go-mc/data"
+	"github.com/Windowsfreak/go-mc/data"
 )
 
 // Packet define a net data package

@@ -3,7 +3,7 @@ package bot
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/Tnze/go-mc/yggdrasil"
+	"github.com/Windowsfreak/go-mc/yggdrasil"
 	"log"
 )
 

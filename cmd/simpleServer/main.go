@@ -4,14 +4,14 @@ package main
 import (
 	"log"
 
-	"github.com/Tnze/go-mc/bot"
-	"github.com/Tnze/go-mc/data"
-	"github.com/Tnze/go-mc/net"
-	pk "github.com/Tnze/go-mc/net/packet"
+	"github.com/Windowsfreak/go-mc/bot"
+	"github.com/Windowsfreak/go-mc/data"
+	"github.com/Windowsfreak/go-mc/net"
+	pk "github.com/Windowsfreak/go-mc/net/packet"
 	"github.com/google/uuid"
 )
 
-const ProtocolVersion = 578
+const ProtocolVersion = 340
 const Threshold = 256
 const MaxPlayer = 200
 

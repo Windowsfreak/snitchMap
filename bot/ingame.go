@@ -3,20 +3,20 @@ package bot
 import (
 	"bytes"
 	"fmt"
+	"github.com/google/uuid"
+	"log"
 	"net"
 	"net/http"
 	"os"
 	"time"
 
-	"github.com/google/uuid"
-
-	"github.com/Tnze/go-mc/bot/world"
-	"github.com/Tnze/go-mc/bot/world/entity"
-	"github.com/Tnze/go-mc/bot/world/entity/player"
-	"github.com/Tnze/go-mc/chat"
-	"github.com/Tnze/go-mc/data"
-	pk "github.com/Tnze/go-mc/net/packet"
-	"github.com/Tnze/go-mc/net/ptypes"
+	"github.com/Windowsfreak/go-mc/bot/world"
+	"github.com/Windowsfreak/go-mc/bot/world/entity"
+	"github.com/Windowsfreak/go-mc/bot/world/entity/player"
+	"github.com/Windowsfreak/go-mc/chat"
+	"github.com/Windowsfreak/go-mc/data"
+	pk "github.com/Windowsfreak/go-mc/net/packet"
+	"github.com/Windowsfreak/go-mc/net/ptypes"
 )
 
 func (c *Client) updateServerPos(pos player.Pos) error {
@@ -211,6 +211,10 @@ func (c *Client) handlePacket(p pk.Packet) (disconnect bool, err error) {
 		err = handleNamedSoundEffect(c, p)
 	case data.Experience:
 		err = handleSetExperience(c, p)
+	case data.PlayerlistHeader:
+		err = handlePlayerlistHeader(c, p)
+	case data.PlayerlistItem:
+		err = handlePlayerlistItem(c, p)
 	default:
 		// fmt.Printf("ignore pack id %X\n", p.ID)
 	}
@@ -446,7 +450,7 @@ func handleChatMessagePacket(c *Client, p pk.Packet) (err error) {
 	}
 
 	if c.Events.ChatMsg != nil {
-		return c.Events.ChatMsg(msg.S, byte(msg.Pos), uuid.UUID(msg.Sender))
+		return c.Events.ChatMsg(msg.S, byte(msg.Pos))
 	}
 	return nil
 }
@@ -488,11 +492,11 @@ func handleJoinGamePacket(c *Client, p pk.Packet) error {
 	c.Gamemode = int(pkt.Gamemode & 0x7)
 	c.Hardcore = pkt.Gamemode&0x8 != 0
 	c.Dimension = int(pkt.Dimension)
-	c.WorldName = string(pkt.WorldName)
-	c.ViewDistance = int(pkt.ViewDistance)
+	c.WorldName = string(pkt.LevelType)
+	// c.ViewDistance = int(pkt.ViewDistance)
 	c.ReducedDebugInfo = bool(pkt.RDI)
-	c.IsDebug = bool(pkt.IsDebug)
-	c.IsFlat = bool(pkt.IsFlat)
+	// c.IsDebug = bool(pkt.IsDebug)
+	c.IsFlat = pkt.LevelType == "flat"
 
 	if c.Events.GameStart != nil {
 		if err := c.Events.GameStart(); err != nil {
@@ -643,6 +647,9 @@ func handleChunkDataPacket(c *Client, p pk.Packet) error {
 }
 
 func handleTileEntityDataPacket(c *Client, p pk.Packet) error {
+	if !c.settings.ReceiveMap {
+		return nil
+	}
 	var pkt ptypes.TileEntityData
 	if err := pkt.Decode(p); err != nil {
 		return err
@@ -800,4 +807,142 @@ func sendPlayerLookPacket(c *Client) error {
 		Pitch:    pk.Float(c.Pos.Pitch),
 		OnGround: pk.Boolean(c.Pos.OnGround),
 	}.Encode())
+}
+
+func handlePlayerlistHeader(c *Client, p pk.Packet) error {
+	var header chat.Message
+	var footer chat.Message
+	if err := p.Scan(&header, &footer); err != nil {
+		return err
+	}
+	c.PlayerlistHeader = header
+	c.PlayerlistFooter = footer
+	//println("Header:", c.PlayerlistHeader.String())
+	//println("Footer:", c.PlayerlistFooter.String())
+	if c.Events.PlayerlistUpdate != nil {
+		return c.Events.PlayerlistUpdate(c.PlayerlistHeader, c.PlayerlistFooter)
+	}
+	return nil
+}
+
+type User struct {
+	UUID           pk.UUID
+	Name           pk.String
+	Properties     [][]string
+	Gamemode       pk.VarInt
+	Ping           pk.VarInt
+	HasDisplayName pk.Boolean
+	DisplayName    chat.Message
+}
+
+func handlePlayerlistItem(c *Client, p pk.Packet) error {
+	r := bytes.NewReader(p.Data)
+	var (
+		action     pk.VarInt
+		numPlayers pk.VarInt
+		players    []User
+	)
+	if err := action.Decode(r); err != nil {
+		return fmt.Errorf("scan1a %w", err)
+	}
+	if err := numPlayers.Decode(r); err != nil {
+		return fmt.Errorf("scan1b %w", err)
+	}
+	players = make([]User, numPlayers)
+
+	for i := range players {
+		players[i] = User{}
+		if err := players[i].UUID.Decode(r); err != nil {
+			return fmt.Errorf("scan2 %w", err)
+		}
+		switch action {
+		case 0:
+			var properties pk.VarInt
+			if err := players[i].Name.Decode(r); err != nil {
+				return fmt.Errorf("scan3a %w", err)
+			}
+			if err := properties.Decode(r); err != nil {
+				return fmt.Errorf("scan3b %w", err)
+			}
+			players[i].Properties = make([][]string, properties)
+			for j := range players[i].Properties {
+				var property []string
+				var key pk.String
+				var value pk.String
+				var isSigned pk.Boolean
+				var signature pk.String
+				if err := key.Decode(r); err != nil {
+					return fmt.Errorf("scan4a %w", err)
+				}
+				if err := value.Decode(r); err != nil {
+					return fmt.Errorf("scan4b %w", err)
+				}
+				if err := isSigned.Decode(r); err != nil {
+					return fmt.Errorf("scan4c %w", err)
+				}
+				if isSigned {
+					if err := signature.Decode(r); err != nil {
+						return fmt.Errorf("scan4d %w", err)
+					}
+					property = []string{string(key), string(value), string(signature)}
+				} else {
+					property = []string{string(key), string(value)}
+				}
+				players[i].Properties[j] = property
+			}
+			if err := players[i].Gamemode.Decode(r); err != nil {
+				return fmt.Errorf("scan6a %w", err)
+			}
+			if err := players[i].Ping.Decode(r); err != nil {
+				return fmt.Errorf("scan6b %w", err)
+			}
+			if err := players[i].HasDisplayName.Decode(r); err != nil {
+				return fmt.Errorf("scan6c %w", err)
+			}
+			if players[i].HasDisplayName {
+				if err := players[i].DisplayName.Decode(r); err != nil {
+					return fmt.Errorf("scan7 %w", err)
+				}
+			}
+			log.Println("Player", players[i].Name, "joined.")
+			player := RecordPlayerLoggingIn(uuid.UUID(players[i].UUID), string(players[i].Name))
+			go func(p User) {
+				if c.Events.PlayerJoin != nil {
+					c.Events.PlayerJoin(player)
+				}
+			}(players[i])
+			break
+		case 1:
+			if err := players[i].Gamemode.Decode(r); err != nil {
+				return fmt.Errorf("scan8 %w", err)
+			}
+			break
+		case 2:
+			if err := players[i].Ping.Decode(r); err != nil {
+				return fmt.Errorf("scan9 %w", err)
+			}
+			break
+		case 3:
+			if err := players[i].HasDisplayName.Decode(r); err != nil {
+				return fmt.Errorf("scan10 %w", err)
+			}
+			if players[i].HasDisplayName {
+				if err := players[i].DisplayName.Decode(r); err != nil {
+					return fmt.Errorf("scan11 %w", err)
+				}
+			}
+		case 4:
+			go func(p User) {
+				player := RecordPlayerLoggingOut(uuid.UUID(p.UUID))
+				log.Println("Player " + player.String() + " left.")
+				if c.Events.PlayerLeave != nil {
+					c.Events.PlayerLeave(player)
+				}
+			}(players[i])
+			break
+		default:
+			return fmt.Errorf("unknown player list item action 0x%02x", action)
+		}
+	}
+	return nil
 }

@@ -2,7 +2,7 @@ package save
 
 import (
 	"encoding/binary"
-	"github.com/Tnze/go-mc/nbt"
+	"github.com/Windowsfreak/go-mc/nbt"
 	"github.com/google/uuid"
 	"io"
 )

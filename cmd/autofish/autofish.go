@@ -4,11 +4,9 @@ import (
 	"log"
 	"time"
 
-	"github.com/google/uuid"
-
-	"github.com/Tnze/go-mc/bot"
-	"github.com/Tnze/go-mc/chat"
-	_ "github.com/Tnze/go-mc/data/lang/en-us"
+	"github.com/Windowsfreak/go-mc/bot"
+	"github.com/Windowsfreak/go-mc/chat"
+	_ "github.com/Windowsfreak/go-mc/data/lang/en-us"
 	//"github.com/mattn/go-colorable" // this package is nice but cannot get in china mainland because it import golang.org/x/sys
 )
 
@@ -74,7 +72,7 @@ func onSound(name string, category int, x, y, z float64, volume, pitch float32) 
 	return nil
 }
 
-func onChatMsg(c chat.Message, pos byte, uuid uuid.UUID) error {
+func onChatMsg(c chat.Message, pos byte) error {
 	log.Println("Chat:", c)
 	return nil
 }

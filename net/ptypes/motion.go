@@ -2,8 +2,8 @@
 package ptypes
 
 import (
-	"github.com/Tnze/go-mc/data"
-	pk "github.com/Tnze/go-mc/net/packet"
+	"github.com/Windowsfreak/go-mc/data"
+	pk "github.com/Windowsfreak/go-mc/net/packet"
 )
 
 // PositionAndLookClientbound describes the location and orientation of

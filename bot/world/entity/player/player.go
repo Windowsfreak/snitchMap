@@ -1,6 +1,6 @@
 package player
 
-import "github.com/Tnze/go-mc/bot/world/entity"
+import "github.com/Windowsfreak/go-mc/bot/world/entity"
 
 type Pos struct {
 	X, Y, Z    float64

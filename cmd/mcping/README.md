@@ -7,7 +7,7 @@ Just for example. Not recommended for daily use. Use [github.com/go-mc/mcping](g
 只起示例作用，日常使用建议使用完整版[github.com/go-mc/mcping](github.com/go-mc/mcping)，包含SRV解析等功能。
 
 Install with go tools:  
-    ```go get -u github.com/Tnze/go-mc/cmd/mcping```
+    ```go get -u github.com/Windowsfreak/go-mc/cmd/mcping```
     `$GOPATH/bin` should in your `$PATH`.
 
 Install with Homebrew:  

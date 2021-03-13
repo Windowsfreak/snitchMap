@@ -11,7 +11,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Tnze/go-mc/save/region"
+	"github.com/Windowsfreak/go-mc/save/region"
 )
 
 var decomp = flag.Bool("x", false, "decompress each chunk to NBT format")

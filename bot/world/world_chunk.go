@@ -1,10 +1,10 @@
 package world
 
 import (
-	"github.com/Tnze/go-mc/bot/world/entity"
-	"github.com/Tnze/go-mc/data/block"
-	pk "github.com/Tnze/go-mc/net/packet"
-	"github.com/Tnze/go-mc/net/ptypes"
+	"github.com/Windowsfreak/go-mc/bot/world/entity"
+	"github.com/Windowsfreak/go-mc/data/block"
+	pk "github.com/Windowsfreak/go-mc/net/packet"
+	"github.com/Windowsfreak/go-mc/net/ptypes"
 )
 
 // Chunk store a 256*16*16 area of blocks, sharded on the Y axis into 16

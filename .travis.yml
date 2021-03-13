@@ -3,4 +3,4 @@ language: go
 go:
 - master
 
-go_import_path: github.com/Tnze/go-mc
+go_import_path: github.com/Windowsfreak/go-mc

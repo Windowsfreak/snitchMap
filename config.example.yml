@@ -1,0 +1,12 @@
+ServerHost: "minecraft.localhost.example"
+ServerPort: 25565
+ServerAddr: ":80"
+PreSharedKey: "share this with your team"
+DiscordToken: "put your discord bot token here"
+Username: "minecrafter@example.com"
+Password: "top-secret"
+DebugChannel: "800000000001"
+GlobalChatChannel: "800000000002"
+SnitchChannel: "800000000003"
+GeneralChannel: "800000000004"
+Https: false
