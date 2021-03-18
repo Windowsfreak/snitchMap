@@ -3,7 +3,7 @@
 ![Protocol](https://img.shields.io/badge/Protocol-340-blue.svg)
 [![GoDoc](https://godoc.org/github.com/Windowsfreak/go-mc?status.svg)](https://godoc.org/github.com/Windowsfreak/go-mc)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Windowsfreak/go-mc)](https://goreportcard.com/report/github.com/Windowsfreak/go-mc)
-[![Build Status](https://travis-ci.org/Windowsfreak/go-mc.svg?branch=master)](https://travis-ci.org/Tnze/go-mc)
+[![Build Status](https://travis-ci.org/Windowsfreak/snitchMap.svg?branch=master)](https://travis-ci.org/Windowsfreak/snitchMap)
 
 There's some library in Go support you to create your Minecraft client or server.  
 这是一些Golang库，用于帮助你编写自己的Minecraft客户端或服务器，
@@ -49,6 +49,12 @@ First of all, you might have a try of the simple examples. It's a good start.
 
 - Run `go run github.com/Windowsfreak/go-mc/cmd/mcping localhost` to ping and list the localhost mc server.  
 - Run `go run github.com/Windowsfreak/go-mc/cmd/daze` to join local server at *localhost:25565* as Steve on offline mode.
+
+### How to use SnitchMap
+
+- Change `config.yml` from `config-example.yml`
+- Run `go build ./cmd/api`, `go build ./cmd/daze`
+- Run `./api` and `./daze` on different shells.
 
 ### Basic Useage
 
