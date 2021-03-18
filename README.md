@@ -1,8 +1,8 @@
 # Go-MC
 ![Version](https://img.shields.io/badge/Minecraft-1.12.2-blue.svg)
 ![Protocol](https://img.shields.io/badge/Protocol-340-blue.svg)
-[![GoDoc](https://godoc.org/github.com/Windowsfreak/go-mc?status.svg)](https://godoc.org/github.com/Windowsfreak/go-mc)
-[![Go Report Card](https://goreportcard.com/badge/github.com/Windowsfreak/go-mc)](https://goreportcard.com/report/github.com/Windowsfreak/go-mc)
+[![GoDoc](https://godoc.org/github.com/Windowsfreak/snitchMap?status.svg)](https://godoc.org/github.com/Windowsfreak/snitchMap)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Windowsfreak/snitchMap)](https://goreportcard.com/report/github.com/Windowsfreak/snitchMap)
 [![Build Status](https://travis-ci.org/Windowsfreak/snitchMap.svg?branch=master)](https://travis-ci.org/Windowsfreak/snitchMap)
 
 There's some library in Go support you to create your Minecraft client or server.  
